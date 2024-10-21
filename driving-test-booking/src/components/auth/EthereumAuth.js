@@ -27,7 +27,7 @@ const EthereumAuth = ({ onLogin, onError }) => {
           setIsRegistered(registered);
 
           if (registered) {
-            onLogin(accounts[0]);
+            onLogin(accounts[0], contractInstance);
           }
         } catch (error) {
           setError('Failed to connect to Ethereum wallet: ' + error.message);
@@ -48,7 +48,7 @@ const EthereumAuth = ({ onLogin, onError }) => {
     try {
       await contract.methods.registerUser().send({ from: account });
       setIsRegistered(true);
-      onLogin(account);
+      onLogin(account, contract);
     } catch (error) {
       setError('Registration failed: ' + error.message);
       onError('Registration failed: ' + error.message);
@@ -84,7 +84,7 @@ const EthereumAuth = ({ onLogin, onError }) => {
     <div className="text-center">
       <p className="mb-4">Connected with address: {account}</p>
       <button 
-        onClick={() => onLogin(account)} 
+        onClick={() => onLogin(account, contract)} 
         className="bg-green-500 text-white px-4 py-2 rounded"
       >
         Enter App
