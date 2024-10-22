@@ -1,4 +1,4 @@
-export const CONTRACT_ADDRESS = '0xb425EBdC5fe0fD7F0Ff8A6470BA4D6846725cc1c';
+export const CONTRACT_ADDRESS = '0x0976bCA030c558dE0D08DE82530026374C929f4e';
 
 export const CONTRACT_ABI = [
   {
@@ -87,6 +87,37 @@ export const CONTRACT_ABI = [
     "inputs": [
       {
         "indexed": false,
+        "internalType": "uint256",
+        "name": "date",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "location",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "venue",
+        "type": "string"
+      }
+    ],
+    "name": "DebugWaitlistEntry",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
         "internalType": "address",
         "name": "candidate",
         "type": "address"
@@ -130,6 +161,31 @@ export const CONTRACT_ABI = [
       }
     ],
     "name": "UserRegistered",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "dateKey",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "originalDate",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "currentLength",
+        "type": "uint256"
+      }
+    ],
+    "name": "WaitlistOperationDebug",
     "type": "event"
   },
   {
@@ -293,29 +349,6 @@ export const CONTRACT_ABI = [
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_testDate",
-        "type": "uint256"
-      },
-      {
-        "internalType": "string",
-        "name": "_preferredLocation",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "_preferredVenue",
-        "type": "string"
-      }
-    ],
-    "name": "joinWaitlist",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
         "name": "_bookingId",
         "type": "uint256"
       }
@@ -413,5 +446,28 @@ export const CONTRACT_ABI = [
     "stateMutability": "view",
     "type": "function",
     "constant": true
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_testDate",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "_preferredLocation",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_preferredVenue",
+        "type": "string"
+      }
+    ],
+    "name": "joinWaitlist",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   }
 ];

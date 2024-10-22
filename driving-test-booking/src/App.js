@@ -18,36 +18,14 @@ function App() {
 
   useEffect(() => {
     if (contract && contract.events) {
-      let eventSubscription;
-  
       const setupEventListener = async () => {
         try {
-          // 对于 Web3.js v1.x
-          if (typeof contract.events.MovedFromWaitlist === 'function') {
-            eventSubscription = contract.events.MovedFromWaitlist()
-              .on('data', (event) => {
-                const { candidate, bookingId, testDate, location, venue } = event.returnValues;
-                console.log(`User ${candidate} moved from waitlist to booking ${bookingId}`);
-                loadBookings(contract, userAccount);
-              })
-              .on('error', console.error);
-          }
-          // 对于 Web3.js v4.x
-          else if (contract.events.MovedFromWaitlist && contract.events.MovedFromWaitlist.subscribe) {
-            eventSubscription = await contract.events.MovedFromWaitlist.subscribe(
-              (error, event) => {
-                if (error) {
-                  console.error('Error in MovedFromWaitlist event:', error);
-                  return;
-                }
-                const { candidate, bookingId, testDate, location, venue } = event.returnValues;
-                console.log(`User ${candidate} moved from waitlist to booking ${bookingId}`);
-                loadBookings(contract, userAccount);
-              }
-            );
-          } else {
-            console.warn('MovedFromWaitlist event not supported or not found');
-          }
+          const eventEmitter = contract.events.MovedFromWaitlist({});
+          eventEmitter.on('data', (event) => {
+            console.log('MovedFromWaitlist event:', event);
+            loadBookings(contract, userAccount);
+          });
+          eventEmitter.on('error', console.error);
         } catch (error) {
           console.error('Error setting up event listener:', error);
         }
@@ -56,12 +34,8 @@ function App() {
       setupEventListener();
   
       return () => {
-        if (eventSubscription) {
-          if (typeof eventSubscription.unsubscribe === 'function') {
-            eventSubscription.unsubscribe();
-          } else if (typeof eventSubscription.removeAllListeners === 'function') {
-            eventSubscription.removeAllListeners();
-          }
+        if (contract.events.MovedFromWaitlist) {
+          contract.events.MovedFromWaitlist().removeAllListeners();
         }
       };
     }
@@ -173,22 +147,46 @@ function App() {
     setError('');
     try {
       const testDateTimestamp = Math.floor(preferredDate.getTime() / 1000);
-      // await contract.methods.joinWaitlist(
-      //   testDateTimestamp,
-      //   preferredLocation || '',
-      //   preferredVenue || ''
-      // ).send({ from: userAccount });
+      
+      console.log('Joining waitlist with parameters:', {
+        testDateTimestamp,
+        preferredLocation,
+        preferredVenue
+      });
+
+      // ETM gas
+      const gasEstimate = await contract.methods.joinWaitlist(
+        testDateTimestamp,
+        preferredLocation || '',
+        preferredVenue || ''
+      ).estimateGas({ from: userAccount });
+
+      console.log('Estimated gas:', gasEstimate.toString());
+
+      // convert BigInt 
+      const gasLimit = Math.floor(Number(gasEstimate.toString()) * 1.5).toString();
+
       const result = await contract.methods.joinWaitlist(
         testDateTimestamp,
         preferredLocation || '',
         preferredVenue || ''
-      ).send({ from: userAccount });
+      ).send({ 
+        from: userAccount,
+        gas: gasLimit
+      });
+
       console.log('Waitlist join result:', result);
       alert('Successfully joined the waitlist!');
-      loadWaitlistEntries(contract, userAccount);
+      await loadWaitlistEntries(contract, userAccount);
     } catch (err) {
       console.error('Failed to join waitlist:', err);
-      setError('Failed to join waitlist: ' + err.message);
+  
+      let errorMessage = err.message;
+      if (err.message.includes('revert')) {
+        const match = err.message.match(/revert(.*)/);
+        errorMessage = match ? match[1].trim() : err.message;
+      }
+      setError('Failed to join waitlist: ' + errorMessage);
     } finally {
       setLoading(false);
     }
@@ -197,13 +195,41 @@ function App() {
   const loadWaitlistEntries = async (contractInstance, account) => {
     setLoading(true);
     try {
-      const entries = await contractInstance.methods.getUserWaitlistEntries(account).call();
-      console.log('Waitlist entries:', entries);
+      console.log('Loading waitlist entries for account:', account);
+
+      // ETM gas
+      const gasEstimate = await contractInstance.methods.getUserWaitlistEntries(account)
+        .estimateGas({ from: account });
+
+      console.log('Estimated gas for getUserWaitlistEntries:', gasEstimate.toString());
+
+      const gasLimit = Math.floor(Number(gasEstimate.toString()) * 1.5).toString();
+
+      const entries = await contractInstance.methods.getUserWaitlistEntries(account)
+        .call({
+          from: account,
+          gas: gasLimit
+        });
+      
+      console.log('Raw waitlist entries from contract:', entries);
+      
+      // check each
+      entries.forEach((entry, index) => {
+        console.log(`Entry ${index}:`, {
+          testDate: new Date(Number(entry.testDate) * 1000).toLocaleString(),
+          preferredLocation: entry.preferredLocation,
+          preferredVenue: entry.preferredVenue,
+          candidate: entry.candidate
+        });
+      });
+  
       const formattedEntries = entries.map(entry => ({
         testDate: new Date(Number(entry.testDate) * 1000),
         preferredLocation: entry.preferredLocation,
         preferredVenue: entry.preferredVenue
       }));
+      
+      console.log('Formatted waitlist entries:', formattedEntries);
       setWaitlistEntries(formattedEntries);
     } catch (err) {
       console.error('Error loading waitlist entries:', err);

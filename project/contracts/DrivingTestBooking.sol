@@ -32,6 +32,9 @@ contract DrivingTestBooking {
     event BookingCancelled(uint256 bookingId);
     event AddedToWaitlist(address candidate, uint256 testDate, string preferredLocation, string preferredVenue);
     event MovedFromWaitlist(address candidate, uint256 bookingId, uint256 testDate, string location, string venue);
+    event DebugWaitlistEntry(uint256 date, address user, string location, string venue);
+    event WaitlistOperationDebug(uint256 dateKey, uint256 originalDate, uint256 currentLength);
+
 
     modifier onlyRegistered() {
         require(registeredUsers[msg.sender], "User is not registered");
@@ -88,12 +91,6 @@ contract DrivingTestBooking {
         }
     }
 
-    function joinWaitlist(uint256 _testDate, string memory _preferredLocation, string memory _preferredVenue) public onlyRegistered {
-        require(_testDate > block.timestamp, "Test date must be in the future");
-        waitlists[_testDate].push(WaitlistEntry(msg.sender, _testDate, _preferredLocation, _preferredVenue));
-        emit AddedToWaitlist(msg.sender, _testDate, _preferredLocation, _preferredVenue);
-    }
-
     function getBooking(uint256 _bookingId) public view returns (address, uint256, string memory, string memory, bool) {
         Booking memory booking = bookings[_bookingId];
         return (booking.candidate, booking.testDate, booking.location, booking.venue, booking.isActive);
@@ -112,26 +109,100 @@ contract DrivingTestBooking {
     }
 
     function getUserWaitlistEntries(address _user) public view returns (WaitlistEntry[] memory) {
-        uint256 count = 0;
-        for (uint256 date = block.timestamp; date < block.timestamp + 365 days; date += 1 days) {
+        // 统计条目数量
+        uint256 totalEntries = 0;
+        uint256 startDate = block.timestamp - (block.timestamp % 86400); // 从今天开始
+        uint256 endDate = startDate + (730 days); // 查找未来两年
+        
+        for (uint256 date = startDate; date <= endDate; date += 86400) {
             for (uint i = 0; i < waitlists[date].length; i++) {
                 if (waitlists[date][i].candidate == _user) {
-                    count++;
+                    totalEntries++;
                 }
             }
         }
-
-        WaitlistEntry[] memory userEntries = new WaitlistEntry[](count);
-        uint256 index = 0;
-        for (uint256 date = block.timestamp; date < block.timestamp + 365 days; date += 1 days) {
+        
+        // 创建结果数组
+        WaitlistEntry[] memory result = new WaitlistEntry[](totalEntries);
+        uint256 resultIndex = 0;
+        
+        // 填充结果数组
+        for (uint256 date = startDate; date <= endDate; date += 86400) {
             for (uint i = 0; i < waitlists[date].length; i++) {
                 if (waitlists[date][i].candidate == _user) {
-                    userEntries[index] = waitlists[date][i];
-                    index++;
+                    result[resultIndex] = waitlists[date][i];
+                    resultIndex++;
                 }
             }
         }
-
-        return userEntries;
+        
+        return result;
     }
+
+    function joinWaitlist(uint256 _testDate, string memory _preferredLocation, string memory _preferredVenue) public onlyRegistered {
+        require(_testDate > block.timestamp, "Test date must be in the future");
+        
+      
+        uint256 dateKey = _testDate - (_testDate % 86400);
+        
+        // 添加长度检查
+        require(waitlists[dateKey].length < 100, "Waitlist for this date is full"); // 设置一个合理的上限
+        
+        // 记录debug信息
+        emit WaitlistOperationDebug(dateKey, _testDate, waitlists[dateKey].length);
+        
+        // 检查用户是否已经在这个日期的候补列表中
+        for(uint i = 0; i < waitlists[dateKey].length; i++) {
+            require(waitlists[dateKey][i].candidate != msg.sender, "Already on waitlist for this date");
+        }
+        
+        // 创建新的候补条目
+        WaitlistEntry memory newEntry = WaitlistEntry({
+            candidate: msg.sender,
+            testDate: _testDate,
+            preferredLocation: _preferredLocation,
+            preferredVenue: _preferredVenue
+        });
+        
+        // 添加到候补列表
+        waitlists[dateKey].push(newEntry);
+        
+        // 发出事件
+        emit AddedToWaitlist(msg.sender, _testDate, _preferredLocation, _preferredVenue);
+    }
+
+    // function joinWaitlist(uint256 _testDate, string memory _preferredLocation, string memory _preferredVenue) public onlyRegistered {
+    //     if (_testDate <= block.timestamp) {
+    //         revert FutureTimeRequired();
+    //     }
+        
+    //     // 规范化日期到当天开始时间
+    //     uint256 dateKey = _testDate - (_testDate % 86400);
+        
+    //     // 添加长度检查
+    //     if (waitlists[dateKey].length >= 100) {
+    //         revert WaitlistFull(dateKey);
+    //     }
+        
+    //     // 检查用户是否已经在这个日期的候补列表中
+    //     for(uint i = 0; i < waitlists[dateKey].length; i++) {
+    //         if (waitlists[dateKey][i].candidate == msg.sender) {
+    //             revert AlreadyOnWaitlist(dateKey);
+    //         }
+    //     }
+        
+    //     // 创建新的候补条目
+    //     WaitlistEntry memory newEntry = WaitlistEntry({
+    //         candidate: msg.sender,
+    //         testDate: _testDate,
+    //         preferredLocation: _preferredLocation,
+    //         preferredVenue: _preferredVenue
+    //     });
+        
+    //     // 添加到候补列表
+    //     waitlists[dateKey].push(newEntry);
+        
+    //     // 发出事件
+    //     emit AddedToWaitlist(msg.sender, _testDate, _preferredLocation, _preferredVenue);
+    // }
 }
