@@ -4,6 +4,7 @@ import BookingForm from './components/booking/BookingForm';
 import BookingList from './components/booking/BookingList';
 import WaitlistSection from './components/booking/WaitlistSection';
 import WaitlistList from './components/booking/WaitlistList';
+import Logo from './components/common/Logo'; 
 
 
 function App() {
@@ -240,31 +241,151 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
-      <div className="relative py-3 sm:max-w-xl sm:mx-auto">
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-light-blue-500 shadow-lg transform -skew-y-6 sm:skew-y-0 sm:-rotate-6 sm:rounded-3xl"></div>
-        <div className="relative px-4 py-10 bg-white shadow-lg sm:rounded-3xl sm:p-20">
-          <h1 className="text-2xl font-semibold mb-5">Driving Test Booking System</h1>
-          {!isAuthenticated ? (
-            <EthereumAuth onLogin={handleLogin} onError={setError} />
-          ) : (
-            <div>
-              <p className="mb-4">Welcome, {userAccount}</p>
-              <BookingForm onSubmit={handleBooking} loading={loading} />
-              {error && <p className="text-red-500 mt-4">{error}</p>}
-              <div className="mt-8">
-                <h2 className="text-xl font-semibold mb-4">Your Bookings</h2>
-                <BookingList bookings={bookings} onCancel={handleCancelBooking} />
+    <div className="min-h-screen bg-gray-100 flex flex-col">
+      {/* navi */}
+      {/* <nav className="bg-[#222222] shadow-sm mb-6"> */}
+      <nav className="bg-gray-800 shadow-sm mb-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <Logo />
+              {/* hello */}
+              <span className="ml-4 text-gray-300 hidden md:block">
+                Kia Ora
+              </span>
+            </div>
+            {isAuthenticated && (
+              <div className="flex items-center space-x-4">
+                <span className="text-sm text-gray-300">
+                  Connected: {userAccount.slice(0, 6)}...{userAccount.slice(-4)}
+                </span>
               </div>
-              <WaitlistSection onJoinWaitlist={handleJoinWaitlist} loading={loading} />
-              <div className="mt-8">
-                <h2 className="text-xl font-semibold mb-4">Your Waitlist Entries</h2>
-                <WaitlistList entries={waitlistEntries} />
+            )}
+          </div>
+        </div>
+      </nav>
+
+      {/* main */}
+      <div className="flex-1 py-6 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* left */}
+            <div className="lg:w-2/3">
+              <div className="bg-white shadow-lg rounded-3xl overflow-hidden relative">
+                {/* bg */}
+                <div className="absolute inset-0 bg-gradient-to-r from-[#00247D]/5 to-[#CC142B]/5"></div>
+                <div className="relative p-6">
+                  {!isAuthenticated ? (
+                    <>
+                      <div className="flex justify-center mb-6">
+                        <img
+                          src="/silver-fern.svg"
+                          alt="Silver Fern"
+                          className="h-12 w-auto"
+                        />
+                      </div>
+                      <h1 className="text-2xl font-semibold mb-3 text-center">
+                        Welcome to ChainBooking
+                      </h1>
+                      <p className="text-gray-600 text-center mb-2">
+                        New Zealand's Blockchain-Based Driving Test Booking System
+                      </p>
+                      <p className="text-gray-500 text-sm text-center mb-6">
+                        Te pūnaha whakarite whakamātautau taraiwa
+                      </p>
+                      <EthereumAuth onLogin={handleLogin} onError={setError} />
+                    </>
+                  ) : (
+                    <div>
+                      <div className="flex items-center mb-4">
+                        <p className="text-lg">Kia Ora, </p>
+                        <p className="ml-2 text-gray-600">{userAccount}</p>
+                      </div>
+                      <BookingForm onSubmit={handleBooking} loading={loading} />
+                      {error && <p className="text-red-500 mt-4">{error}</p>}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          )}
+
+            {/* right */}
+            {isAuthenticated && (
+              <div className="lg:w-1/3 space-y-6">
+                <div className="bg-white shadow-lg rounded-3xl overflow-hidden">
+                  <div className="p-6">
+                    <h2 className="text-xl font-semibold mb-4">Your Bookings</h2>
+                    <BookingList bookings={bookings} onCancel={handleCancelBooking} />
+                  </div>
+                </div>
+
+                <div className="bg-white shadow-lg rounded-3xl overflow-hidden">
+                  <div className="p-6">
+                    <h2 className="text-xl font-semibold mb-4">Waitlist</h2>
+                    <WaitlistSection onJoinWaitlist={handleJoinWaitlist} loading={loading} />
+                    <div className="mt-6">
+                      <h3 className="text-lg font-semibold mb-4">Your Waitlist Entries</h3>
+                      <WaitlistList entries={waitlistEntries} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* foot */}
+      <footer className="bg-gray-800 text-white mt-auto">
+        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <h3 className="text-lg font-semibold mb-2 text-white">ChainBooking</h3>
+              <p className="text-sm text-gray-300 hover:text-gray-200">
+                New Zealand's Blockchain-Based Driving Test Booking System
+              </p>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-2 text-white">Contact</h3>
+              <p className="text-sm text-gray-300">
+                Email: <a href="mailto:info@chainbooking.co.nz" className="hover:text-gray-200">info@chainbooking.co.nz</a><br />
+                Phone: <span className="hover:text-gray-200">0800 BOOKING</span>
+              </p>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-2 text-white">Official Links</h3>
+              <ul className="text-sm text-gray-300">
+                <li>
+                  <a 
+                    href="https://www.nzta.govt.nz" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="hover:text-gray-200 transition-colors duration-200"
+                  >
+                    NZTA Website
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="https://www.drivingtests.co.nz" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="hover:text-gray-200 transition-colors duration-200"
+                  >
+                    Practice Tests
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div className="mt-8 pt-6 border-t border-gray-700 text-center">
+            <p className="text-sm text-gray-400">ChainBooking © {new Date().getFullYear()}</p>
+            <p className="mt-1 text-sm text-gray-400 hover:text-gray-300">
+              Proudly made in Aotearoa New Zealand
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
